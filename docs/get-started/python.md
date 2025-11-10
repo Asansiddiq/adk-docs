@@ -70,20 +70,31 @@ use. Update the generated `agent.py` code to include a `get_current_time` tool
 for use by the agent, as shown in the following code:
 
 ```python
-from google.adk.agents.llm_agent import Agent
+from adk import Agent, tool
+from datetime import datetime
+import pytz
 
-# Mock tool implementation
-def get_current_time(city: str) -> dict:
-    """Returns the current time in a specified city."""
-    return {"status": "success", "city": city, "time": "10:30 AM"}
+# Define a simple tool
+@tool
+def get_current_time(city: str) -> str:
+    """Returns the current time in the specified city."""
+    try:
+        timezone = pytz.timezone(city)
+        return f"The current time in {city} is {datetime.now(timezone).strftime('%I:%M %p')}."
+    except Exception:
+        return "Sorry, I couldn't find that city."
 
-root_agent = Agent(
-    model='gemini-2.5-flash',
-    name='root_agent',
-    description="Tells the current time in a specified city.",
-    instruction="You are a helpful assistant that tells the current time in cities. Use the 'get_current_time' tool for this purpose.",
+# Create the agent
+agent = Agent(
+    name="root_agent",
+    model="gemini-2.5-pro",  # or gemini-2.5-flash
     tools=[get_current_time],
+    system_instruction="You are a helpful time-telling assistant."
 )
+
+# Run loop
+if __name__ == "__main__":
+    agent.run()
 ```
 
 ### Set your API key
